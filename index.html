@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>File Encryption Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      body { font-family: 'Inter', sans-serif; }
+      .tab-panel { display: none; }
+      .tab-active { display: block; }
+    </style>
+  </head>
+  <body class="bg-slate-950 text-slate-100 min-h-screen">
+    <div class="max-w-6xl mx-auto p-6">
+      <header class="mb-8">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p class="text-sm uppercase tracking-[0.3em] text-sky-400">Secure Client-Side Utility</p>
+            <h1 class="text-3xl font-semibold mt-2">File Encryption & Integrity Tool</h1>
+            <p class="max-w-2xl text-slate-400 mt-2">Encrypt or decrypt files locally and verify file integrity with SHA-256 / SHA-512 hashes—all without sending data to a server.</p>
+          </div>
+          <div class="rounded-3xl bg-slate-900 border border-slate-800 px-4 py-3 text-sm text-slate-300">
+            Built with Web Crypto API · Client-side only
+          </div>
+        </div>
+      </header>
+
+      <div class="rounded-3xl bg-slate-900 border border-slate-800 p-1 mb-6">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1">
+          <button id="tab-encrypt" class="tab-button px-4 py-3 text-sm font-medium rounded-3xl bg-slate-800 text-slate-100 hover:bg-slate-700 transition">Encrypt / Decrypt</button>
+          <button id="tab-hash" class="tab-button px-4 py-3 text-sm font-medium rounded-3xl bg-slate-900 text-slate-400 hover:bg-slate-800 transition">Hash & Integrity</button>
+        </div>
+      </div>
+
+      <section id="panel-encrypt" class="tab-panel tab-active rounded-3xl bg-slate-900 border border-slate-800 p-6 space-y-5">
+        <div class="grid gap-4 lg:grid-cols-[1.3fr,0.9fr]">
+          <div class="space-y-4">
+            <div class="rounded-3xl border border-slate-800 bg-slate-950 p-5">
+              <div class="flex items-center justify-between gap-4 mb-4">
+                <div>
+                  <h2 class="text-xl font-semibold">File Encryption / Decryption</h2>
+                  <p class="text-slate-400 text-sm mt-1">Drag & drop one file, enter a passphrase, then encrypt or decrypt.</p>
+                </div>
+                <div class="inline-flex rounded-full bg-slate-800 px-3 py-2 text-sm text-slate-300">
+                  <span class="font-semibold text-sky-300">Mode</span>
+                </div>
+              </div>
+              <div class="grid gap-4">
+                <div class="rounded-3xl border border-dashed border-slate-700 bg-slate-950 p-6 text-center" id="encrypt-dropzone">
+                  <p class="text-slate-400">Drop a file here or click to select</p>
+                  <p class="text-slate-500 text-xs mt-2">Only one file at a time.</p>
+                  <input id="encrypt-file" type="file" class="hidden" />
+                </div>
+                <div class="grid gap-3 sm:grid-cols-2">
+                  <label class="block">
+                    <span class="text-sm text-slate-300">Password / Passphrase</span>
+                    <input id="password" type="password" placeholder="Enter a strong passphrase" class="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20" />
+                  </label>
+                  <label class="block">
+                    <span class="text-sm text-slate-300">Action</span>
+                    <select id="mode-select" class="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20">
+                      <option value="encrypt">Encrypt</option>
+                      <option value="decrypt">Decrypt</option>
+                    </select>
+                  </label>
+                </div>
+                <button id="process-button" class="w-full rounded-2xl bg-sky-500 px-5 py-3 text-base font-semibold text-slate-950 transition hover:bg-sky-400">Process File</button>
+                <div id="encrypt-status" class="rounded-2xl border border-slate-700 bg-slate-950 p-4 text-sm text-slate-300 hidden"></div>
+              </div>
+            </div>
+          </div>
+          <div class="rounded-3xl border border-slate-800 bg-slate-950 p-5 space-y-4">
+            <div>
+              <h3 class="text-lg font-semibold text-slate-100">How it works</h3>
+              <ul class="mt-3 space-y-2 text-slate-400 text-sm">
+                <li>• Derives a key with PBKDF2 and a random salt.</li>
+                <li>• Encrypts with AES-GCM using a secure IV.</li>
+                <li>• Outputs file as downloadable blob with embedded salt and IV.</li>
+                <li>• Decryption reads salt/IV and verifies authenticity automatically.</li>
+              </ul>
+            </div>
+            <div class="rounded-3xl border border-slate-800 bg-slate-900 p-4 text-slate-300">
+              <p class="font-semibold text-slate-100">Encryption file format</p>
+              <p class="text-slate-400 text-sm mt-2 leading-relaxed">The encrypted output embeds the salt and IV in the first bytes, so decryption can reconstruct the same key and verify the ciphertext.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-hash" class="tab-panel rounded-3xl bg-slate-900 border border-slate-800 p-6 space-y-5">
+        <div class="grid gap-4 lg:grid-cols-[1.1fr,0.9fr]">
+          <div class="space-y-4">
+            <div class="rounded-3xl border border-dashed border-slate-700 bg-slate-950 p-6 text-center" id="hash-dropzone">
+              <p class="text-slate-400">Drop a file here or click to select</p>
+              <p class="text-slate-500 text-xs mt-2">Hash will calculate automatically when the file is loaded.</p>
+              <input id="hash-file" type="file" class="hidden" />
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label class="block">
+                <span class="text-sm text-slate-300">Hash Algorithm</span>
+                <select id="hash-algo" class="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20">
+                  <option value="SHA-256">SHA-256</option>
+                  <option value="SHA-512">SHA-512</option>
+                </select>
+              </label>
+              <label class="block">
+                <span class="text-sm text-slate-300">Compare Hash</span>
+                <input id="hash-compare" type="text" placeholder="Paste expected hash" class="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20" />
+              </label>
+            </div>
+            <div class="rounded-3xl border border-slate-800 bg-slate-950 p-4 space-y-3">
+              <p class="text-sm text-slate-400">Computed hash</p>
+              <pre id="hash-output" class="min-h-[120px] whitespace-pre-wrap break-all text-slate-100"></pre>
+            </div>
+          </div>
+          <div class="rounded-3xl border border-slate-800 bg-slate-900 p-6 space-y-4">
+            <div>
+              <h3 class="text-lg font-semibold text-slate-100">Integrity check</h3>
+              <p class="text-slate-400 mt-2 text-sm">Paste a hash to compare it instantly with the computed value. A green badge means the file matches the expected digest.</p>
+            </div>
+            <div id="hash-result" class="rounded-3xl border border-slate-800 bg-slate-950 p-5 text-center text-slate-300">
+              <p class="text-sm">No hash compared yet.</p>
+            </div>
+            <div class="rounded-3xl border border-slate-800 bg-slate-950 p-5 text-slate-300 text-sm">
+              <p class="font-semibold text-slate-100">Privacy guarantee</p>
+              <p class="mt-2 leading-relaxed">All hashing and encryption occur in your browser. No file data is uploaded or shared with servers.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>
